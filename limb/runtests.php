@@ -1,9 +1,12 @@
 #!/usr/bin/env php
 <?php
-set_include_path(dirname(__FILE__) . '/../' . PATH_SEPARATOR . get_include_path());
+set_include_path(
+    dirname(__FILE__) . '/../' . PATH_SEPARATOR .
+    dirname(__FILE__) . '/../../' . PATH_SEPARATOR .
+    get_include_path());
 ini_set('memory_limit', '256M');
 
-define('LIMB_PATH', dirname(__FILE__));
+define('LIMB_PATH', dirname(__FILE__) . '/../../limb');
 
 require_once(LIMB_PATH . '/tests_runner/common.inc.php');
 require_once(LIMB_PATH . '/tests_runner/src/lmbTestRunner.class.php');
