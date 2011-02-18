@@ -1,0 +1,53 @@
+====== Пакет PROFILE ======
+Пакет предназначен для профайлинга приложений написанных с использованием Limb. Основные функции, предоставляемые пакетом:
+  * автопрофайлинг запросов к БД и кэшам, с последующим выводом в различных формах
+  * утилиты для "ручного" профайлинга отдельных участков ваших приложений
+ 
+===== Автопрофайлинг запросов =====
+Автопрофайлинг умеет собирать информацию о запросах в БД (тест, время, stack trace), запросах к кешам (ключ, время, stack trace) и информацию о окружении (содержимое _SERVER, _ENV и т.д.). Поддерживаются несколько методов вывода информации о запросе: 
+  * "панель"  - отображается вверху страницы, и представляет из себя панель с выпадающими секциями
+  * "таблица"  - отображается внизу страницы, как список таблиц-секций
+  * "лог" - not implemented yet
+
+==== Настройка ====
+Файл profile.conf.php:
+<code php>
+$conf['enabled'] = true;
+$conf['profile_reporter'] = 'lmbProfilePanelReporter'; //переключение методов вывода (lmbProfilePanelReporter - панель, lmbProfileTableReporter - таблица)
+</code>
+
+==== Интеграция ==== 
+
+Для включения автопрофайлинга в вашем приложении необходимо включить [[limb3:ru:packages:web_app:filter_chain|фильтр]] **lmbProfileReportingFilter** (он находится в файле limb/profile/src/filter/lmbProfileReportingFilter.class.php) в начало вашего приложения. 
+
+Если вы используете **lmbWebApplication** в качестве базового класса приложения, то интеграция может выглядеть так:
+<code php>
+lmb_require('limb/web_app/src/lmbWebApplication.class.php');
+
+class MyApplication extends lmbWebApplication
+{
+  function __construct()
+  {
+    $this->addPreActionFilter(new lmbHandle('limb/profile/src/filter/lmbProfileReportingFilter.class.php'));
+  }
+}
+</code> 
+
+Если же вы построили свое приложение "с нуля", то 
+<code php>
+lmb_require('limb/filter_chain/src/lmbFilterChain.class.php');
+lmb_require('limb/core/src/lmbHandle.class.php');
+
+class LimbApplication extends lmbFilterChain
+{
+  function __construct()
+  {
+    $this->registerFilter(new lmbHandle('limb/web_app/src/filter/lmbUncaughtExceptionHandlingFilter'));
+    //Обратите внимание, что фильтр расположен после lmbUncaughtExceptionHandlingFilter. Это необходимо для того, чтобы отлавливать ошибки, возникающие в работе самого lmbProfileReportingFilter (ошибки в настройке БД, кэшей, etc).
+    $this->registerFilter(new lmbHandle('limb/profile/src/filter/lmbProfileReportingFilter.class.php'));
+
+...</code>
+
+
+===== "Ручной" профайлинг =====
+FIXME см. limb/profile/tests/cases/toolkit/lmbProfileUtilsToolsTest.class.php

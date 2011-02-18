@@ -1,0 +1,49 @@
+====== Пакет Migrate ======
+:!: Пакет находится в инкубаторе. Для использования его полного функционала необходимо перенести содержимое папки migrate в папку с пакетами limb.
+
+Пакет представляет из себя систему контроля версий SQL Баз Данных. Новые изменения Базы Данных сохраняются в файлы (миграции) в виде SQL запросов ALTER/CREATE.
+
+В связке с проектом пакет удобно использовать по средствам утилиты [[limb3:ru:packages:taskman:limb.php|limb.php]]
+
+===== Задачи пакета Migrate =====
+
+^Тег^Описание^Зависимости^
+|||Расположение: **limb/migrate/cli/migrate.inc.php** |||
+| **migrate_init_config** | Init project config. Creates migrate.conf.php in project/settings dir. By default:\\ **DSN**: used project db.conf.php\\ **Schema**: project_dir/init/migrate/schema.sql\\ **Data**: project_dir/init/migrate/data.sql\\ **Migrations**: project_dir/init/migrate/migrations/ | |
+| **migrate_init** | Init project migration: create dump files and sets version 1 | migrate_init_config |
+| **migrate_dump_all** | Dump schema and data | migrate_init_config |
+| **migrate_dump_schema** | Dump schema | migrate_init_config |
+| **migrate_dump_data** | Dump data | migrate_init_config |
+| **migrate_load_all** | Load schema and data | migrate_init_config |
+| **migrate_create** | Create new migration file (using diff) | migrate_init_config |
+| **migrate_run** | Apply new migration file(s) | migrate_init_config |
+| **migrate_dryrun** | Test new migration file(s) | migrate_init_config |
+
+===== Workflow системы миграций =====
+
+==== 1. Инициализация ====
+Для начала вам необходимо инициализировать систему миграций:
+<code>limb.php migrate_init</code>
+Процедура создаст в вашей БД таблицу schema_info содержащую одну единственную запись с номером версии схемы. И сохранит начальные дампы по путям указаным в конфиге settings/migrate.conf.php (если отсутствует, - то создается автоматически запускаемой процедурой migrate_init_config)
+
+
+==== 2. Создание миграции ====
+Теперь, если новый код вашего проекта требует изменения базы данных, вы можете вносить изменения в вашу локальную БД (сервер разработки).
+Когда код и новая схема БД отлажены вам необходимо создать новую миграцию:
+<code>limb.php migrate_create</code>
+Система спросит у вас имя миграции в интерактивном режиме. Будет создан файл с SQL кодом миграции и именем файла в формате <номер_версии>_<имя_миграции>.sql . Соответственно имя миграции должно соответствовать правилам именования файлов вашей ФС. Идентификатор версии схемы БД будет обновлен до версии вашей новой миграции.
+
+**До** создания файла миграции можно посмотреть что будет включено в его содержимое по средствам процедуры diff:
+<code>limb.php migrate_diff</code>
+
+Когда файл миграции создан вы можете включить его в состав коммита с кодом работающим с этой версией БД.
+
+
+==== 3. Применение миграции ====
+Другой разработчик получив из репозитория вашу новую версию проекта (вместе с файлом миграции) должен применить её при помощи процедуры run.
+<code>limb.php migrate_run</code>
+Процедура применяет все миграции версии которых "свежее" установленной в данный момент схемы.
+
+Вы можете запустить процедуру применения новой миграции "в сухую".:
+<code>limb.php migrate_dryrun</code>
+В этом случае процедура создаст временную БД с схемой вашей БД, попытается применить к ней новые миграции и сообщит о возможных ошибках.
